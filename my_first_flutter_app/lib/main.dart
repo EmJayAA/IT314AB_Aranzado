@@ -40,6 +40,9 @@ class Profile{
   double? height;
   bool? studentStatus;
   String? imagePath;
+  String? studentId;
+  String? email;
+  String? phoneNumber;
 
   Profile({
     this.name,
@@ -48,7 +51,10 @@ class Profile{
     this.hobbies,
     this.height,
     this.studentStatus,
-    this.imagePath
+    this.imagePath,
+    this.studentId,
+    this.email,
+    this.phoneNumber
   }
   );
 }
@@ -63,44 +69,76 @@ class _MyHomePageState extends State<MyHomePage> {
       age: 23,
       hobbies: {'Building Suits','AI management'},
       height: 185.2,
+      studentId: '2020-0001',
+      email: 'ironman@dbtc.edu.ph',
+      phoneNumber: '09171234567',
       studentStatus: true,
     ),
     Profile(
       imagePath: 'assets/Spiderman Logo.png',
+      name: 'Spiderman',
       courseAndsection: 'BSIT - 2',
       age: 19,
       hobbies: {'Photography','Web Slinging'},
       height: 175.2,
+      studentId: '2020-0002',
+      email: 'spiderman@dbtc.edu.ph',
+      phoneNumber: '09182345678',
       studentStatus: true,
     ),
     Profile(
+      imagePath: 'assets/Batman Logo.png',
       name: 'Batman',
       courseAndsection: 'BS Criminology - 4',
       age: 24,
       hobbies: {'Martial Arts','Learning new languages'},
       height: 186.5,
+      studentId: '2020-0003',
+      email: 'batman@dbtc.edu.ph',
+      phoneNumber: '09193456789',
       studentStatus: false,
     ),
     Profile(
       imagePath: 'assets/Superman Logo.png',
       name: 'Superman',
       courseAndsection: 'BA Journalism- 3',
+      age: 22,
       hobbies: {'Reporting','Farming'},
       height: 187.0,
+      studentId: '2020-0004',
+      email: 'superman@dbtc.edu.ph',
+      phoneNumber: '09204567890',
       studentStatus: true,
     ),
     Profile(
       imagePath: 'assets/Captain America Logo.png',
       name: 'Captain America',
+      courseAndsection: 'BS Military Science - 4',
       age: 30,
       hobbies: {'Boxing','Drawing'},
       height: 189.0,
+      studentId: '2020-0005',
+      email: 'captainamerica@dbtc.edu.ph',
+      phoneNumber: '09215678901',
       studentStatus: false,
+    ),
+    Profile(
+      imagePath: 'assets/Flash Logo.png',
+      name: 'Flash',
+      courseAndsection: 'BS Physics - 2',
+      age: 21,
+      hobbies: {'Sprinting','Forensics'},
+      height: 180.0,
+      studentId: '2020-0006',
+      email: 'ironman@dbtc.edu.ph',
+      phoneNumber: '09226789012',
+      studentStatus: true,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    profiles.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
     return Scaffold(
       backgroundColor: const Color(0xFF800000),
       appBar: AppBar(
@@ -114,11 +152,34 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      body: profiles.isEmpty ?
+        const Center(
           child: Column(
-            children: profiles.map((profile) {
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('No Student Found.',
+            style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Helvetica',
+                      color: Colors.white,)),
+            SizedBox(height: 5),
+            Text('Your student profile is currently empty.',
+            style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Helvetica',
+                      color: Colors.white70,)),
+            SizedBox(height: 20)
+          ]
+          )
+        )
+      : ListView.builder(
+          padding: const EdgeInsets.all(20.0),
+            itemCount: profiles.length,
+            itemBuilder: (context, index){
+            final profile = profiles[index];  
         return Padding(
           padding: const EdgeInsets.only(bottom: 20.0),
           child:Card(
@@ -210,6 +271,36 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
+                    'Student ID: ${profile.studentId ?? 'N/A'}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Helvetica',
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Email: ${profile.email ?? 'N/A'}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Helvetica',
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Contact No.: ${profile.phoneNumber ?? 'N/A'}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Helvetica',
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
                     'Enrolled: ${profile.studentStatus != null ? (profile.studentStatus! ? "Yes" : "No") : "Not provided"}',
                     style: TextStyle(
                       fontSize: 20,
@@ -224,9 +315,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         );
-     }).toList(),
-    ),
-        ),
+        }
       ),  
     );
   }
