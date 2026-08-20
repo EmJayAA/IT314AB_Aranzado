@@ -43,6 +43,8 @@ class Profile{
   String? studentId;
   String? email;
   String? phoneNumber;
+  bool isTapped;
+  bool isFavorite;
 
   Profile({
     this.name,
@@ -54,7 +56,9 @@ class Profile{
     this.imagePath,
     this.studentId,
     this.email,
-    this.phoneNumber
+    this.phoneNumber,
+    this.isTapped = false,
+    this.isFavorite = false
   }
   );
 }
@@ -182,9 +186,16 @@ class _MyHomePageState extends State<MyHomePage> {
             final profile = profiles[index];  
         return Padding(
           padding: const EdgeInsets.only(bottom: 20.0),
-          child:Card(
+          child: GestureDetector(
+            onTap: (){
+              setState((){
+                profile.isTapped = !profile.isTapped;
+              });
+              print('Card tapped for ${profile.name}');
+            },
+          child: Card(
             elevation: 8,
-            color: const Color(0xFF2A0808),
+            color: profile.isTapped ?const Color(0xFF8B263E): const Color(0xFF2A0808),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: const BorderSide(
@@ -192,7 +203,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 1.5,
               ),
             ),
-            child: Padding(
+            child: Stack(
+            children: [
+            Padding(
               padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 25.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -313,6 +326,57 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
             ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                     icon: Icon(
+                      profile.isFavorite ? Icons.favorite : Icons.favorite,
+                      color: profile.isFavorite ? Colors.yellow: Colors.white,),
+                      onPressed: () {
+                      setState((){
+                        profile.isFavorite = !profile.isFavorite;
+                        print('Favorite pressed for ${profile.name}');});
+                      },
+                    ),
+                    IconButton(
+                     icon: const Icon(Icons.edit, color: Colors.white,),
+                      onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context){
+                          return SizedBox(
+                            height: 800,
+                            child: Center(
+                              child:ElevatedButton(
+                                child: const Text ('Edit'),
+                              onPressed: (){
+                                Navigator.pop(context);
+                              }
+                              )
+                              )
+                          );
+                        });
+                      print('Edit pressed for ${profile.name}');
+                      },  
+                    ),
+                    IconButton(
+                     icon: const Icon(Icons.delete, color: Colors.white,),
+                      onPressed: () {
+                      setState((){
+                        profiles.removeAt(index);
+                        print('Delete pressed for ${profile.name}');});
+                      },
+                    )
+                  ],
+              )
+            )
+            ]
+          ),
+          ),
           ),
         );
         }
