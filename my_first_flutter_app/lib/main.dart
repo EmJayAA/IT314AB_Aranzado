@@ -64,6 +64,20 @@ class Profile{
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool isLoading = true;
+ 
+  @override
+  void initState() {
+      super.initState();
+      Future.delayed(const Duration(seconds: 3),() 
+      {
+        setState(() {
+          isLoading = false; 
+        }
+        );
+      }
+      );
+    }
 
   List<Profile> profiles = [
     Profile(
@@ -156,7 +170,11 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true,
       ),
-      body: profiles.isEmpty ?
+      body: isLoading ?
+            const Center(
+              child: CircularProgressIndicator()
+            )
+      : profiles.isEmpty ?
         const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -312,14 +330,20 @@ class _MyHomePageState extends State<MyHomePage> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Enrolled: ${profile.studentStatus != null ? (profile.studentStatus! ? "Yes" : "No") : "Not provided"}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
+                  const SizedBox(height: 20),
+                  if (profile.studentStatus == false)
+                  const Center(
+                  child:
+                    Text(
+                      'WARNING: STUDENT IS NOT ENROLLED',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        fontStyle: FontStyle.italic,
+                        fontFamily: 'Helvetica',
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -370,7 +394,17 @@ class _MyHomePageState extends State<MyHomePage> {
                         profiles.removeAt(index);
                         print('Delete pressed for ${profile.name}');});
                       },
-                    )
+                    ),
+                    SizedBox(width: 10),
+                    if (profile.studentStatus == true)
+                      const Icon(Icons.circle,
+                      size: 25,
+                      color: Colors.green)
+                    else
+                      const Icon(Icons.circle,
+                      size: 25,
+                      color: Colors.red),
+                    SizedBox(width: 10)  
                   ],
               )
             )
