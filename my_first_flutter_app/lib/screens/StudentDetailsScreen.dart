@@ -168,25 +168,89 @@ class StudentDetailsScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                     icon: const Icon(Icons.edit, color: Colors.white,),
-                      onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (BuildContext context){
-                          return SizedBox(
-                            height: 800,
-                            child: Center(
-                              child:ElevatedButton(
-                                child: const Text ('Edit'),
-                              onPressed: (){
-                                Navigator.pop(context);
-                              }
-                              )
-                              )
-                          );
-                        });
-                      print('Edit pressed for ${profile.name}');
-                      },  
+                        icon: const Icon(Icons.edit, color: Colors.white),
+                        onPressed: () {
+                          final nameController = TextEditingController(text: profile.name);
+                          final courseController = TextEditingController(text: profile.courseAndsection);
+                          final ageController = TextEditingController(text: profile.age?.toString());
+                          final emailController = TextEditingController(text: profile.email);
+                          final phoneController = TextEditingController(text: profile.phoneNumber);
+
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (BuildContext context) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            left: 20.0,
+                            right: 20.0,
+                            top: 20.0,
+                            bottom: MediaQuery.of(context).viewInsets.bottom + 20.0,
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Edit Student Details',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 15),
+                                TextField(
+                                  controller: nameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Name',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: courseController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Course & Section',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: ageController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Age',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: emailController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                TextField(
+                                  controller: phoneController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Contact No.',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context); 
+                                  },
+                                  child: const Text('Save Changes'),
+                                ),
+                                  ],
+                                  ),
+                                  ),
+                                  );
+                                },
+                            );
+                           print('Edit pressed for ${profile.name}');
+                        },
                     ),
                     SizedBox(width: 10),
                     if (profile.studentStatus == true)

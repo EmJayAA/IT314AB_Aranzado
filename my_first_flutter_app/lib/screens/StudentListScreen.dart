@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'StudentDetailsScreen.dart';
+import 'AddStudentScreen.dart';
 
 class Profile{
   String? name;
@@ -147,6 +148,14 @@ class _StudentListScreenState extends State<StudentListScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+      actions: [
+     IconButton(
+        icon: const Icon(Icons.add, color: Colors.white),
+        onPressed: () {
+          Navigator.pushNamed(context,'/add-student');
+        },
+      ),
+    ],
         centerTitle: true,
       ),
       body: isLoading ?
@@ -184,11 +193,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
         return Padding(
           padding: const EdgeInsets.only(bottom: 20.0),
           child: GestureDetector(
-            onTap: (){
-              Navigator.push(
-                context, 
-                  MaterialPageRoute(builder: (context) => StudentDetailsScreen(profile: profile),)
-              );
+            onTap: () {
+              Navigator.pushNamed(context,'/student-details', arguments: profile,);
             },
           child: Card(
             elevation: 8,

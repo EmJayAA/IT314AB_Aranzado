@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/StudentListScreen.dart';
+import 'screens/StudentDetailsScreen.dart';
+import 'screens/AddStudentScreen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My First Flutter Application',
+      title: 'Student Directory',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -19,7 +21,22 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const StudentListScreen(title: 'Student Directory'),
+      initialRoute: '/student-list',
+    
+      routes: {
+        '/student-list': (context) => const StudentListScreen(title: 'Student Directory'),
+        '/add-student': (context) => const AddStudentScreen(),
+      },
+
+      onGenerateRoute: (settings) {
+        if (settings.name == '/student-details') {
+          final profile = settings.arguments as Profile;
+          return MaterialPageRoute(
+            builder: (context) => StudentDetailsScreen(profile: profile),
+          );
+        }
+        return null;
+      },
     );
   }
 }
