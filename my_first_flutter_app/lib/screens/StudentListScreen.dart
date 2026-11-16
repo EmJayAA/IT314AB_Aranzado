@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'StudentDetailsScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'AddStudentScreen.dart';
 
-class Profile{
+class Profile {
   String? name;
   String? courseAndsection;
   int? age;
@@ -28,9 +29,42 @@ class Profile{
     this.email,
     this.phoneNumber,
     this.isTapped = false,
-    this.isFavorite = false
+    this.isFavorite = false,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'courseAndsection': courseAndsection,
+      'age': age,
+      'hobbies': hobbies?.toList(),
+      'height': height,
+      'studentStatus': studentStatus,
+      'imagePath': imagePath,
+      'studentId': studentId,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'isTapped': isTapped,
+      'isFavorite': isFavorite,
+    };
   }
-  );
+
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    return Profile(
+      name: json['name'],
+      courseAndsection: json['courseAndsection'],
+      age: json['age'],
+      hobbies: json['hobbies'] != null ? Set<String>.from(json['hobbies']) : null,
+      height: (json['height'] as num?)?.toDouble(),
+      studentStatus: json['studentStatus'],
+      imagePath: json['imagePath'],
+      studentId: json['studentId'],
+      email: json['email'],
+      phoneNumber: json['phoneNumber'],
+      isTapped: json['isTapped'] ?? false,
+      isFavorite: json['isFavorite'] ?? false,
+    );
+  }
 }
 
 class StudentListScreen extends StatefulWidget {
@@ -44,30 +78,15 @@ class StudentListScreen extends StatefulWidget {
 
 class _StudentListScreenState extends State<StudentListScreen> {
   bool isLoading = true;
- 
-  @override
-  void initState() {
-    profiles.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
-      super.initState();
-      Future.delayed(const Duration(seconds: 3),() 
-      {
-      if(mounted){
-        setState(() {
-          isLoading = false; 
-        }
-        );
-      }
-      }
-      );
-    }
+  List<Profile> profiles = [];
 
-  List<Profile> profiles = [
+  final List<Profile> _defaultProfiles = [
     Profile(
       imagePath: 'assets/IronMan Logo.png',
       name: 'Iron Man',
       courseAndsection: 'BS Engineering - 4',
       age: 23,
-      hobbies: {'Building Suits','AI management'},
+      hobbies: {'Building Suits', 'AI management'},
       height: 185.2,
       studentId: '2020-0001',
       email: 'ironman@dbtc.edu.ph',
@@ -79,7 +98,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       name: 'Spiderman',
       courseAndsection: 'BSIT - 2',
       age: 19,
-      hobbies: {'Photography','Web Slinging'},
+      hobbies: {'Photography', 'Web Slinging'},
       height: 175.2,
       studentId: '2020-0002',
       email: 'spiderman@dbtc.edu.ph',
@@ -91,7 +110,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       name: 'Batman',
       courseAndsection: 'BS Criminology - 4',
       age: 24,
-      hobbies: {'Martial Arts','Learning new languages'},
+      hobbies: {'Martial Arts', 'Learning new languages'},
       height: 186.5,
       studentId: '2020-0003',
       email: 'batman@dbtc.edu.ph',
@@ -103,7 +122,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       name: 'Superman',
       courseAndsection: 'BA Journalism- 3',
       age: 22,
-      hobbies: {'Reporting','Farming'},
+      hobbies: {'Reporting', 'Farming'},
       height: 187.0,
       studentId: '2020-0004',
       email: 'superman@dbtc.edu.ph',
@@ -115,7 +134,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       name: 'Captain America',
       courseAndsection: 'BS Military Science - 4',
       age: 30,
-      hobbies: {'Boxing','Drawing'},
+      hobbies: {'Boxing', 'Drawing'},
       height: 189.0,
       studentId: '2020-0005',
       email: 'captainamerica@dbtc.edu.ph',
@@ -127,7 +146,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       name: 'Flash',
       courseAndsection: 'BS Physics - 2',
       age: 21,
-      hobbies: {'Sprinting','Forensics'},
+      hobbies: {'Sprinting', 'Forensics'},
       height: 180.0,
       studentId: '2020-0006',
       email: 'flash@dbtc.edu.ph',
@@ -135,7 +154,43 @@ class _StudentListScreenState extends State<StudentListScreen> {
       studentStatus: true,
     ),
   ];
-@override
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? storedData = prefs.getString('saved_students');
+
+    if (storedData != null) {
+      final List<dynamic> decodedList = jsonDecode(storedData);
+      profiles = decodedList.map((item) => Profile.fromJson(item)).toList();
+    } else {
+      profiles = List.from(_defaultProfiles);
+      await _saveProfiles();
+    }
+
+    profiles.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveProfiles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encodedData = jsonEncode(profiles.map((p) => p.toJson()).toList());
+    await prefs.setString('saved_students', encodedData);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF800000),
@@ -148,257 +203,317 @@ class _StudentListScreenState extends State<StudentListScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-      actions: [
-     IconButton(
-        icon: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          Navigator.pushNamed(context,'/add-student');
-        },
-      ),
-    ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.white),
+            onPressed: () async {
+              final existingIds = profiles
+                  .map((p) => p.studentId ?? '')
+                  .where((id) => id.isNotEmpty)
+                  .toList();
+
+              final newStudent = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddStudentScreen(
+                    existingStudentIds: existingIds,
+                  ),
+                ),
+              );
+
+              if (newStudent != null && newStudent is Map<String, String>) {
+                setState(() {
+                  profiles.add(
+                    Profile(
+                      studentId: newStudent['id'],
+                      name: newStudent['name'],
+                      courseAndsection: '${newStudent['course']} - ${newStudent['year']}',
+                      email: newStudent['email'],
+                      studentStatus: true,
+                    ),
+                  );
+                  profiles.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+                });
+                await _saveProfiles();
+              }
+            },
+          ),
+        ],
         centerTitle: true,
       ),
-      body: isLoading ?
-            const Center(
-              child: CircularProgressIndicator()
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
             )
-      : profiles.isEmpty ?
-        const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text('No Student Found.',
-            style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,)),
-            SizedBox(height: 5),
-            Text('Your student profile is currently empty.',
-            style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white70,)),
-            SizedBox(height: 20)
-          ]
-          )
-        )
-      : ListView.builder(
-          padding: const EdgeInsets.all(20.0),
-            itemCount: profiles.length,
-            itemBuilder: (context, index){
-            final profile = profiles[index];  
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 20.0),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context,'/student-details', arguments: profile,);
-            },
-          child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(
-                color: Color(0xFFFFD700),
-                width: 1.5,
-              ),
-            ),
-            child: Stack(
-            children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 25.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipOval(
-                    child: (profile.imagePath?.isNotEmpty == true)
-                        ? Image.asset(
-                            profile.imagePath!,
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            width: 120,
-                            height: 120,
-                            color: Colors.grey[800],
-                            child: const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.white54,
+          : profiles.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'No Student Found.',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Helvetica',
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        'Your student profile is currently empty.',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Helvetica',
+                          color: Colors.white70,
+                        ),
+                      ),
+                      SizedBox(height: 20)
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(20.0),
+                  itemCount: profiles.length,
+                  itemBuilder: (context, index) {
+                    final profile = profiles[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: GestureDetector(
+                        onTap: () async {
+                          final updated = await Navigator.pushNamed(
+                            context,
+                            '/student-details',
+                            arguments: profile,
+                          );
+                          if (updated == true) {
+                            setState(() {
+                              profiles.sort((a, b) =>
+                                  (a.name ?? '').compareTo(b.name ?? ''));
+                            });
+                            await _saveProfiles();
+                          }
+                        },
+                        child: Card(
+                          elevation: 8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: const BorderSide(
+                              color: Color(0xFFFFD700),
+                              width: 1.5,
                             ),
                           ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    profile.name ?? 'Name Unknown',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
-                      color: Colors.yellow,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    profile.courseAndsection ?? 'Course: Unknown',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Age: ${profile.age?.toString() ?? 'N/A'}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Hobbies: ${(profile.hobbies != null && profile.hobbies!.isNotEmpty) ? profile.hobbies!.join(", ") : "Not provided"}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Height: ${profile.height!= null ? "${profile.height} cm" : "Unknown"}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Student ID: ${profile.studentId ?? 'N/A'}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Email: ${profile.email ?? 'N/A'}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Contact No.: ${profile.phoneNumber ?? 'N/A'}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Helvetica',
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (profile.studentStatus == false)
-                  const Center(
-                  child:
-                    Text(
-                      'WARNING: STUDENT IS NOT ENROLLED',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        fontStyle: FontStyle.italic,
-                        fontFamily: 'Helvetica',
-                        color: Colors.white,
+                          child: Stack(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 30.0, horizontal: 25.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ClipOval(
+                                      child: (profile.imagePath?.isNotEmpty == true)
+                                          ? Image.asset(
+                                              profile.imagePath!,
+                                              width: 120,
+                                              height: 120,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Container(
+                                              width: 120,
+                                              height: 120,
+                                              color: Colors.grey[800],
+                                              child: const Icon(
+                                                Icons.person,
+                                                size: 60,
+                                                color: Colors.white54,
+                                              ),
+                                            ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      profile.name ?? 'Name Unknown',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Montserrat',
+                                        color: Colors.yellow,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      profile.courseAndsection ?? 'Course: Unknown',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Age: ${profile.age?.toString() ?? 'N/A'}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Hobbies: ${(profile.hobbies != null && profile.hobbies!.isNotEmpty) ? profile.hobbies!.join(", ") : "Not provided"}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Height: ${profile.height != null ? "${profile.height} cm" : "Unknown"}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Student ID: ${profile.studentId ?? 'N/A'}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Email: ${profile.email ?? 'N/A'}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Contact No.: ${profile.phoneNumber ?? 'N/A'}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Helvetica',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    if (profile.studentStatus == false)
+                                      const Center(
+                                        child: Text(
+                                          'WARNING: STUDENT IS NOT ENROLLED',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            fontStyle: FontStyle.italic,
+                                            fontFamily: 'Helvetica',
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                ),
+                              ),
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.favorite,
+                                        color: profile.isFavorite
+                                            ? Colors.yellow
+                                            : Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          profile.isFavorite = !profile.isFavorite;
+                                        });
+                                        _saveProfiles();
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return SizedBox(
+                                              height: 800,
+                                              child: Center(
+                                                child: ElevatedButton(
+                                                  child: const Text('Edit'),
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          profiles.removeAt(index);
+                                        });
+                                        _saveProfiles();
+                                      },
+                                    ),
+                                    const SizedBox(width: 10),
+                                    if (profile.studentStatus == true)
+                                      const Icon(
+                                        Icons.circle,
+                                        size: 25,
+                                        color: Colors.green,
+                                      )
+                                    else
+                                      const Icon(
+                                        Icons.circle,
+                                        size: 25,
+                                        color: Colors.red,
+                                      ),
+                                    const SizedBox(width: 10)
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                     icon: Icon(
-                      profile.isFavorite ? Icons.favorite : Icons.favorite,
-                      color: profile.isFavorite ? Colors.yellow: Colors.white,),
-                      onPressed: () {
-                      setState((){
-                        profile.isFavorite = !profile.isFavorite;
-                        print('Favorite pressed for ${profile.name}');});
-                      },
-                    ),
-                    IconButton(
-                     icon: const Icon(Icons.edit, color: Colors.white,),
-                      onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (BuildContext context){
-                          return SizedBox(
-                            height: 800,
-                            child: Center(
-                              child:ElevatedButton(
-                                child: const Text ('Edit'),
-                              onPressed: (){
-                                Navigator.pop(context);
-                              }
-                              )
-                              )
-                          );
-                        });
-                      print('Edit pressed for ${profile.name}');
-                      },  
-                    ),
-                    IconButton(
-                     icon: const Icon(Icons.delete, color: Colors.white,),
-                      onPressed: () {
-                      setState((){
-                        profiles.removeAt(index);
-                        print('Delete pressed for ${profile.name}');});
-                      },
-                    ),
-                    SizedBox(width: 10),
-                    if (profile.studentStatus == true)
-                      const Icon(Icons.circle,
-                      size: 25,
-                      color: Colors.green)
-                    else
-                      const Icon(Icons.circle,
-                      size: 25,
-                      color: Colors.red),
-                    SizedBox(width: 10)  
-                  ],
-              )
-            )
-            ]
-          ),
-          ),
-          ),
-        );
-        }
-      ),  
+                    );
+                  },
+                ),
     );
   }
 }
