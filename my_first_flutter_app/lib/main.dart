@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
-import 'screens/StudentListScreen.dart';
-import 'screens/StudentDetailsScreen.dart';
-import 'screens/AddStudentScreen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'screens/student/StudentListScreen.dart';
+import 'screens/student/StudentDetailsScreen.dart';
+import 'screens/student/AddStudentScreen.dart';
+import 'screens/subject/SubjectListScreen.dart';
+import 'screens/schedule/ScheduleListScreen.dart';
+import 'screens/enrollment/EnrollmentListScreen.dart';
+import 'screens/grade/GradeListScreen.dart';
+import 'models/student_model.dart';
+import 'viewmodels/student_viewmodel.dart';
+import 'viewmodels/subject_viewmodel.dart';
+import 'viewmodels/schedule_viewmodel.dart';
+import 'viewmodels/enrollment_viewmodel.dart';
+import 'viewmodels/grade_viewmodel.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   runApp(const MyApp());
 }
 
@@ -12,31 +26,44 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Student Directory',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF800000),
-          brightness: Brightness.dark,
-        ),
-      ),
-      initialRoute: '/student-list',
-    
-      routes: {
-        '/student-list': (context) => const StudentListScreen(title: 'Student Directory'),
-        '/add-student': (context) => const AddStudentScreen(),
-      },
+    const maroonColor = Color(0xFF800000);
 
-      onGenerateRoute: (settings) {
-        if (settings.name == '/student-details') {
-          final profile = settings.arguments as Profile;
-          return MaterialPageRoute(
-            builder: (context) => StudentDetailsScreen(profile: profile),
-          );
-        }
-        return null;
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => StudentViewModel()),
+        ChangeNotifierProvider(create: (_) => SubjectViewModel()),
+        ChangeNotifierProvider(create: (_) => ScheduleViewModel()),
+        ChangeNotifierProvider(create: (_) => EnrollmentViewModel()),
+        ChangeNotifierProvider(create: (_) => GradeViewModel()),
+      ],
+      child: MaterialApp(
+        title: 'Student Directory',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: maroonColor,
+            brightness: Brightness.dark,
+          ),
+        ),
+        initialRoute: '/student-list',
+        routes: {
+          '/student-list': (context) => const StudentListScreen(title: 'Student Directory'),
+          '/add-student': (context) => const AddStudentScreen(),
+          '/subject-list': (context) => const SubjectListScreen(title: 'Subject Catalog'),
+          '/schedule-list': (context) => const ScheduleListScreen(title: 'Class Schedules'),
+          '/enrollment-list': (context) => const EnrollmentListScreen(title: 'Student Enrollments'),
+          '/grade-list': (context) => const GradeListScreen(title: 'Grade Records'),
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == '/student-details') {
+            final student = settings.arguments as Student;
+            return MaterialPageRoute(
+              builder: (context) => StudentDetailsScreen(student: student),
+            );
+          }
+          return null;
+        },
+      ),
     );
   }
 }

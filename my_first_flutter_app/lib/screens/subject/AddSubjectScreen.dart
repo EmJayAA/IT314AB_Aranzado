@@ -1,62 +1,71 @@
 import 'package:flutter/material.dart';
+import '../../models/subject_model.dart';
 
-class AddStudentScreen extends StatefulWidget {
-  final List<String> existingStudentIds;
+class AddSubjectScreen extends StatefulWidget {
+  final List<String> existingSubjectCodes;
+  final Subject? subjectToEdit;
 
-  const AddStudentScreen({super.key, this.existingStudentIds = const []});
+  const AddSubjectScreen({
+    super.key,
+    this.existingSubjectCodes = const [],
+    this.subjectToEdit,
+  });
 
   @override
-  State<AddStudentScreen> createState() => _AddStudentScreenState();
+  State<AddSubjectScreen> createState() => _AddSubjectScreenState();
 }
 
-class _AddStudentScreenState extends State<AddStudentScreen> {
+class _AddSubjectScreenState extends State<AddSubjectScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _studentIdController = TextEditingController();
-  final _fullNameController = TextEditingController();
-  final _courseController = TextEditingController();
-  final _yearLevelController = TextEditingController();
-  final _emailController = TextEditingController();
+  late final TextEditingController _subjectCodeController;
+  late final TextEditingController _subjectNameController;
+  late final TextEditingController _unitsController;
+  late final TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _subjectCodeController = TextEditingController(text: widget.subjectToEdit?.subjectCode ?? '');
+    _subjectNameController = TextEditingController(text: widget.subjectToEdit?.subjectName ?? '');
+    _unitsController = TextEditingController(text: widget.subjectToEdit?.units.toString() ?? '');
+    _descriptionController = TextEditingController(text: widget.subjectToEdit?.description ?? '');
+  }
 
   @override
   void dispose() {
-    _studentIdController.dispose();
-    _fullNameController.dispose();
-    _courseController.dispose();
-    _yearLevelController.dispose();
-    _emailController.dispose();
+    _subjectCodeController.dispose();
+    _subjectNameController.dispose();
+    _unitsController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
   void _validateAndSubmit() {
     if (_formKey.currentState!.validate()) {
-      final newStudent = {
-        'id': _studentIdController.text.trim(),
-        'name': _fullNameController.text.trim(),
-        'course': _courseController.text.trim(),
-        'year': _yearLevelController.text.trim(),
-        'email': _emailController.text.trim(),
-      };
+      final updatedSubject = Subject(
+        subjectID: widget.subjectToEdit?.subjectID ?? DateTime.now().millisecondsSinceEpoch,
+        subjectCode: _subjectCodeController.text.trim(),
+        subjectName: _subjectNameController.text.trim(),
+        units: int.parse(_unitsController.text.trim()),
+        description: _descriptionController.text.trim(),
+      );
 
-      _studentIdController.clear();
-      _fullNameController.clear();
-      _courseController.clear();
-      _yearLevelController.clear();
-      _emailController.clear();
-
-      Navigator.pop(context, newStudent);
+      Navigator.pop(context, updatedSubject);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.subjectToEdit != null;
+
     return Scaffold(
       backgroundColor: const Color(0xFF800000),
       appBar: AppBar(
         backgroundColor: const Color(0xFF5A0000),
-        title: const Text(
-          'Add Student',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          isEditing ? 'Edit Subject' : 'Add Subject',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -67,10 +76,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Student Enrollment Form',
+              Text(
+                isEditing ? 'Update Subject Information' : 'Subject Enrollment Form',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFFFFD700),
@@ -78,73 +87,58 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               ),
               const SizedBox(height: 20),
               _buildTextField(
-                controller: _studentIdController,
-                label: 'Student ID',
-                icon: Icons.badge,
+                controller: _subjectCodeController,
+                label: 'Subject Code',
+                icon: Icons.code,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Student ID is required.';
+                    return 'Subject Code is required.';
                   }
-                  if (widget.existingStudentIds.contains(value.trim())) {
-                    return 'This Student ID already exists.';
+                  final trimmedValue = value.trim();
+                  if (trimmedValue != widget.subjectToEdit?.subjectCode &&
+                      widget.existingSubjectCodes.contains(trimmedValue)) {
+                    return 'This Subject Code already exists.';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                controller: _fullNameController,
-                label: 'Full Name',
-                icon: Icons.person,
+                controller: _subjectNameController,
+                label: 'Subject Name',
+                icon: Icons.subject,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Full Name is required.';
+                    return 'Subject Name is required.';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                controller: _courseController,
-                label: 'Course',
-                icon: Icons.school,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Course is required.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 15),
-              _buildTextField(
-                controller: _yearLevelController,
-                label: 'Year Level (1-5)',
-                icon: Icons.calendar_today,
+                controller: _unitsController,
+                label: 'Units (1-5)',
+                icon: Icons.looks_one,
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Year Level is required.';
+                    return 'Units are required.';
                   }
-                  final year = int.tryParse(value.trim());
-                  if (year == null || year < 1 || year > 5) {
-                    return 'Enter a valid year level between 1 and 5.';
+                  final units = int.tryParse(value.trim());
+                  if (units == null || units < 1 || units > 5) {
+                    return 'Enter valid units between 1 and 5.';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                controller: _emailController,
-                label: 'Email Address',
-                icon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
+                controller: _descriptionController,
+                label: 'Description',
+                icon: Icons.description,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Email Address is required.';
-                  }
-                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                  if (!emailRegex.hasMatch(value.trim())) {
-                    return 'Please enter a valid email address.';
+                    return 'Description is required.';
                   }
                   return null;
                 },
@@ -160,9 +154,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   ),
                 ),
                 onPressed: _validateAndSubmit,
-                child: const Text(
-                  'Submit Enrollment',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: Text(
+                  isEditing ? 'Save Changes' : 'Submit Subject',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
